@@ -4,16 +4,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+. "$PSScriptRoot\scripts\resolve-node.ps1"
+
 $bunBin = Join-Path $env:USERPROFILE ".bun\bin"
 $bunExe = Join-Path $bunBin "bun.exe"
-$bunxExe = Join-Path $bunBin "bunx.exe"
+$nodeExe = Resolve-ProjectNode
 
 if (-not (Test-Path -LiteralPath $bunExe)) {
   throw "Bun was not found at $bunExe. Install Bun first, then rerun this script."
-}
-
-if (-not (Test-Path -LiteralPath $bunxExe)) {
-  throw "Bunx was not found at $bunxExe. Reinstall Bun, then rerun this script."
 }
 
 $env:PATH = "$bunBin;$env:PATH"
@@ -26,14 +24,17 @@ if ($Check) {
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $projectRoot
 
-& $bunExe install
-if ($LASTEXITCODE -ne 0) {
-  exit $LASTEXITCODE
+$nodeModules = Join-Path $projectRoot "node_modules"
+if (-not (Test-Path -LiteralPath $nodeModules)) {
+  & $bunExe install --ignore-scripts
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
 }
 
 $convexProcess = Start-Process `
-  -FilePath $bunxExe `
-  -ArgumentList @("convex", "dev") `
+  -FilePath $nodeExe `
+  -ArgumentList @("node_modules\convex\bin\main.js", "dev") `
   -WorkingDirectory $projectRoot `
   -NoNewWindow `
   -PassThru

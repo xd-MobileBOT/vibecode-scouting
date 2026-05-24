@@ -32,7 +32,7 @@ export async function requireUser(ctx: Ctx): Promise<{
 export function isAdminEmail(email: string) {
   const admins = (process.env.ADMIN_EMAILS ?? "")
     .split(",")
-    .map((value) => value.trim().toLowerCase())
+    .map((value: string) => value.trim().toLowerCase())
     .filter(Boolean)
 
   return admins.includes(email.toLowerCase())

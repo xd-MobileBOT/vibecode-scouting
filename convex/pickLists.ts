@@ -1,6 +1,6 @@
 import { v } from "convex/values"
 
-import { mutation, query } from "./_generated/server"
+import { mutation, query, type MutationCtx } from "./_generated/server"
 import { requireAdmin, requireUser } from "./authz"
 import { computeAverages } from "./aggregates"
 import { pickTierValidator } from "./validators"
@@ -271,10 +271,10 @@ export const importConsensusToPrimary = mutation({
   },
 })
 
-async function activeEventOrThrow(ctx: { db: any }) {
+async function activeEventOrThrow(ctx: MutationCtx) {
   const event = await ctx.db
     .query("events")
-    .withIndex("by_active", (q: any) => q.eq("active", true))
+    .withIndex("by_active", (q) => q.eq("active", true))
     .first()
   if (!event) {
     throw new Error("Import an event first.")
@@ -282,10 +282,10 @@ async function activeEventOrThrow(ctx: { db: any }) {
   return event as Doc<"events">
 }
 
-async function primaryListIdOrThrow(ctx: { db: any }, eventId: Id<"events">) {
+async function primaryListIdOrThrow(ctx: MutationCtx, eventId: Id<"events">) {
   const list = await ctx.db
     .query("pickLists")
-    .withIndex("by_eventId_and_type", (q: any) =>
+    .withIndex("by_eventId_and_type", (q) =>
       q.eq("eventId", eventId).eq("type", "primary"),
     )
     .first()
@@ -296,13 +296,13 @@ async function primaryListIdOrThrow(ctx: { db: any }, eventId: Id<"events">) {
 }
 
 async function primaryListIdOrCreate(
-  ctx: { db: any },
+  ctx: MutationCtx,
   eventId: Id<"events">,
   userId: Id<"users">,
 ) {
   const existing = await ctx.db
     .query("pickLists")
-    .withIndex("by_eventId_and_type", (q: any) =>
+    .withIndex("by_eventId_and_type", (q) =>
       q.eq("eventId", eventId).eq("type", "primary"),
     )
     .first()
@@ -323,13 +323,13 @@ async function primaryListIdOrCreate(
 }
 
 async function addAllTeamsToList(
-  ctx: { db: any },
+  ctx: MutationCtx,
   eventId: Id<"events">,
   pickListId: Id<"pickLists">,
 ) {
   const teams = await ctx.db
     .query("teams")
-    .withIndex("by_eventId", (q: any) => q.eq("eventId", eventId))
+    .withIndex("by_eventId", (q) => q.eq("eventId", eventId))
     .collect()
 
   for (const [index, team] of teams
@@ -347,7 +347,7 @@ async function addAllTeamsToList(
 }
 
 async function upsertPickItem(
-  ctx: { db: any },
+  ctx: MutationCtx,
   pickListId: Id<"pickLists">,
   team: Doc<"teams">,
   tier: PickTier,
@@ -355,7 +355,7 @@ async function upsertPickItem(
 ) {
   const existing = await ctx.db
     .query("pickListItems")
-    .withIndex("by_pickListId_and_teamId", (q: any) =>
+    .withIndex("by_pickListId_and_teamId", (q) =>
       q.eq("pickListId", pickListId).eq("teamId", team._id),
     )
     .first()
@@ -378,13 +378,13 @@ async function upsertPickItem(
 }
 
 async function nextOrderForTier(
-  ctx: { db: any },
+  ctx: MutationCtx,
   pickListId: Id<"pickLists">,
   tier: PickTier,
 ) {
   const items = await ctx.db
     .query("pickListItems")
-    .withIndex("by_pickListId_and_tier_and_order", (q: any) =>
+    .withIndex("by_pickListId_and_tier_and_order", (q) =>
       q.eq("pickListId", pickListId).eq("tier", tier),
     )
     .collect()
