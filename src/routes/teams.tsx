@@ -22,7 +22,7 @@ export function TeamsRoute() {
   const viewer = useQuery(api.events.viewer)
   const data = useQuery(
     api.teams.listForActiveEvent,
-    isAuthenticated ? {} : "skip",
+    viewer?.isAuthenticated ? {} : "skip",
   )
   const [query, setQuery] = useState("")
   const [selectedTeamId, setSelectedTeamId] = useState<Id<"teams"> | null>(null)

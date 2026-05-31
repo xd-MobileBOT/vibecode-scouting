@@ -1,6 +1,11 @@
 import { v } from "convex/values"
 
-import { action, internalMutation, type MutationCtx } from "./_generated/server"
+import {
+  action,
+  internalMutation,
+  type ActionCtx,
+  type MutationCtx,
+} from "./_generated/server"
 import { internal } from "./_generated/api"
 import { requireAdmin } from "./authz"
 import type { Id } from "./_generated/dataModel"
@@ -33,24 +38,33 @@ type ImportResult = {
 }
 
 export const importEvent = action({
-  args: { eventKey: v.string() },
+  args: { eventKey: v.string(), apiKey: v.optional(v.string()) },
   handler: async (ctx, args): Promise<ImportResult> => {
     const user = await requireAdmin(ctx)
     const eventKey = args.eventKey.trim().toLowerCase()
-    const apiKey = process.env.TBA_API_KEY
+    const providedApiKey = args.apiKey?.trim()
+    const storedApiKey: string | null = await ctx.runQuery(
+      internal.settings.getTbaApiKey,
+      {},
+    )
+    const apiKey = providedApiKey || storedApiKey || process.env.TBA_API_KEY
 
     if (!apiKey) {
-      throw new Error("Missing TBA_API_KEY in Convex environment.")
+      throw new Error(
+        "Enter a TBA API key before importing an event.",
+      )
     }
 
     if (!/^\d{4}[a-z0-9]+$/.test(eventKey)) {
       throw new Error("Enter a valid TBA event key, like 2025nvlv.")
     }
 
-    const [teams, matches] = await Promise.all([
-      tbaFetch<TbaTeam[]>(`/event/${eventKey}/teams/simple`, apiKey),
-      tbaFetch<TbaMatch[]>(`/event/${eventKey}/matches/simple`, apiKey),
-    ])
+    const [teams, matches] = await fetchEventData({
+      eventKey,
+      apiKey,
+      usingStoredApiKey: !providedApiKey && Boolean(storedApiKey),
+      ctx,
+    })
 
     const qualificationMatches = matches.filter((match) => match.comp_level === "qm")
 
@@ -73,6 +87,14 @@ export const importEvent = action({
         blueTeamNumbers: match.alliances.blue.team_keys.map(teamNumberFromTbaKey),
       })),
     })
+
+    if (providedApiKey) {
+      await ctx.runMutation(internal.settings.saveTbaApiKeyFromImport, {
+        apiKey: providedApiKey,
+        updatedByUserId: user.userId,
+      })
+    }
+
     return result
   },
 })
@@ -193,10 +215,45 @@ async function tbaFetch<T>(path: string, apiKey: string): Promise<T> {
   })
 
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("The TBA API key was rejected. Paste a valid TBA API key and try again.")
+    }
+    if (response.status === 404) {
+      throw new Error("TBA could not find that event key.")
+    }
     throw new Error(`TBA request failed (${response.status}) for ${path}`)
   }
 
   return (await response.json()) as T
+}
+
+async function fetchEventData({
+  eventKey,
+  apiKey,
+  usingStoredApiKey,
+  ctx,
+}: {
+  eventKey: string
+  apiKey: string
+  usingStoredApiKey: boolean
+  ctx: ActionCtx
+}): Promise<[TbaTeam[], TbaMatch[]]> {
+  try {
+    return await Promise.all([
+      tbaFetch<TbaTeam[]>(`/event/${eventKey}/teams/simple`, apiKey),
+      tbaFetch<TbaMatch[]>(`/event/${eventKey}/matches/simple`, apiKey),
+    ])
+  } catch (error) {
+    if (
+      usingStoredApiKey &&
+      error instanceof Error &&
+      error.message.includes("TBA API key was rejected")
+    ) {
+      await ctx.runMutation(internal.settings.clearTbaApiKey, {})
+    }
+
+    throw error
+  }
 }
 
 function teamNumberFromTbaKey(teamKey: string) {

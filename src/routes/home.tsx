@@ -19,7 +19,7 @@ export function HomeRoute() {
   const activeEvent = useQuery(api.events.active)
   const teamData = useQuery(
     api.teams.listForActiveEvent,
-    isAuthenticated ? {} : "skip",
+    viewer?.isAuthenticated ? {} : "skip",
   )
 
   if (isLoading || viewer === undefined || activeEvent === undefined) {

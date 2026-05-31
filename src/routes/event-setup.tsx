@@ -1,6 +1,11 @@
 import { useConvexAuth } from "@convex-dev/auth/react"
 import { useAction, useQuery } from "convex/react"
-import { CalendarSyncIcon, Loader2Icon, ShieldAlertIcon, TrophyIcon } from "lucide-react"
+import {
+  CalendarSyncIcon,
+  Loader2Icon,
+  ShieldAlertIcon,
+  TrophyIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -14,12 +19,17 @@ export function EventSetupRoute() {
   const { isAuthenticated, isLoading } = useConvexAuth()
   const viewer = useQuery(api.events.viewer)
   const activeEvent = useQuery(api.events.active)
+  const settingsStatus = useQuery(
+    api.settings.adminStatus,
+    viewer?.isAdmin ? {} : "skip",
+  )
   const importEvent = useAction(api.tba.importEvent)
   const [isImporting, setIsImporting] = useState(false)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
+    const apiKey = String(formData.get("apiKey") ?? "").trim()
     const eventKey = String(formData.get("eventKey") ?? "").trim().toLowerCase()
 
     if (!eventKey) {
@@ -29,13 +39,15 @@ export function EventSetupRoute() {
 
     setIsImporting(true)
     try {
-      const result = await importEvent({ eventKey })
+      const result = await importEvent(
+        apiKey ? { eventKey, apiKey } : { eventKey },
+      )
       toast.success(
         `Imported ${result.teamCount} teams and ${result.matchCount} qualification matches`,
       )
       event.currentTarget.reset()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Event import failed")
+      toast.error(importErrorMessage(error))
     } finally {
       setIsImporting(false)
     }
@@ -96,28 +108,69 @@ export function EventSetupRoute() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-lg border bg-card p-4">
-          <div className="flex items-center gap-2">
-            <CalendarSyncIcon className="size-4 text-muted-foreground" />
-            <h2 className="font-semibold">Import from TBA</h2>
-          </div>
-          <div className="mt-4 space-y-1.5">
-            <Label htmlFor="event-key">Event key</Label>
-            <Input
-              id="event-key"
-              name="eventKey"
-              placeholder="2025nvlv"
-              autoComplete="off"
+        <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="rounded-lg border bg-card p-4">
+            <div className="flex items-center gap-2">
+              <CalendarSyncIcon className="size-4 text-muted-foreground" />
+              <h2 className="font-semibold">Import from TBA</h2>
+            </div>
+            <div className="mt-4 space-y-1.5">
+              <Label htmlFor="tba-api-key">TBA API key</Label>
+              <Input
+                id="tba-api-key"
+                name="apiKey"
+                type="password"
+                placeholder={
+                  settingsStatus?.hasTbaApiKey
+                    ? "Stored key exists"
+                    : "Paste TBA API key"
+                }
+                autoComplete="off"
+                disabled={isImporting}
+              />
+            </div>
+            <div className="mt-4 space-y-1.5">
+              <Label htmlFor="event-key">Event key</Label>
+              <Input
+                id="event-key"
+                name="eventKey"
+                placeholder="2025nvlv"
+                autoComplete="off"
+                disabled={isImporting}
+                required
+              />
+            </div>
+            <Button
+              type="submit"
               disabled={isImporting}
-              required
-            />
-          </div>
-          <Button type="submit" disabled={isImporting} className="mt-4 w-full sm:w-auto">
-            {isImporting ? <Loader2Icon className="animate-spin" /> : <CalendarSyncIcon />}
-            Import event
-          </Button>
-        </form>
+              className="mt-4 w-full sm:w-auto"
+            >
+              {isImporting ? (
+                <Loader2Icon className="animate-spin" />
+              ) : (
+                <CalendarSyncIcon />
+              )}
+              Import event
+            </Button>
+          </form>
+        </div>
       </div>
     </section>
   )
+}
+
+function importErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error)
+
+  if (message.includes("TBA_API_KEY")) {
+    return "Enter a TBA API key, then try the import again."
+  }
+  if (message.includes("TBA API key was rejected")) {
+    return "The TBA API key was rejected. Paste a valid TBA API key and try again."
+  }
+  if (message.includes("TBA could not find that event key")) {
+    return "TBA could not find that event key."
+  }
+
+  return message || "Event import failed"
 }

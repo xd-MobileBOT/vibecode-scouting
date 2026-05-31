@@ -1,7 +1,7 @@
 import { v } from "convex/values"
 
 import { query } from "./_generated/server"
-import { requireAdmin, requireUser, isAdminEmail } from "./authz"
+import { getCurrentUser, requireAdmin, requireUser, isAdminEmail } from "./authz"
 
 export const active = query({
   args: {},
@@ -18,8 +18,8 @@ export const active = query({
 export const viewer = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (identity === null || !identity.email) {
+    const user = await getCurrentUser(ctx)
+    if (user === null) {
       return {
         isAuthenticated: false,
         isAdmin: false,
@@ -30,9 +30,9 @@ export const viewer = query({
 
     return {
       isAuthenticated: true,
-      isAdmin: isAdminEmail(identity.email),
-      email: identity.email,
-      name: identity.name ?? identity.email,
+      isAdmin: isAdminEmail(user.email),
+      email: user.email,
+      name: user.name,
     }
   },
 })

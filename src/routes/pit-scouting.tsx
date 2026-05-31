@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner"
 
 import { api } from "../../convex/_generated/api"
+import { AuthForm } from "@/components/auth-form"
 import { StatusPill } from "@/components/scouting/status-pill"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -61,7 +62,11 @@ const climbCapabilityFields = climbOptions.filter(
 )
 
 export function PitScoutingRoute() {
-  const data = useQuery(api.pitScouting.list)
+  const viewer = useQuery(api.events.viewer)
+  const data = useQuery(
+    api.pitScouting.list,
+    viewer?.isAuthenticated ? {} : "skip",
+  )
   const savePitReport = useMutation(api.pitScouting.save)
   const [search, setSearch] = React.useState("")
   const [activeTeam, setActiveTeam] = React.useState<PitTeam | null>(null)
@@ -123,6 +128,18 @@ export function PitScoutingRoute() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  if (viewer === undefined || (viewer.isAuthenticated && data === undefined)) {
+    return <ScoutingShell title="Pit scouting" loading />
+  }
+
+  if (!viewer.isAuthenticated) {
+    return (
+      <section className="mx-auto w-full max-w-md">
+        <AuthForm />
+      </section>
+    )
   }
 
   if (data === undefined) {

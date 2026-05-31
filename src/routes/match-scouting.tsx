@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner"
 
 import { api } from "../../convex/_generated/api"
+import { AuthForm } from "@/components/auth-form"
 import { RatingControl } from "@/components/scouting/rating-control"
 import { ScoreStepper } from "@/components/scouting/score-stepper"
 import { StatusPill } from "@/components/scouting/status-pill"
@@ -64,7 +65,11 @@ const newMatchForm = (): MatchReportForm => ({
 })
 
 export function MatchScoutingRoute() {
-  const data = useQuery(api.matchScouting.landing)
+  const viewer = useQuery(api.events.viewer)
+  const data = useQuery(
+    api.matchScouting.landing,
+    viewer?.isAuthenticated ? {} : "skip",
+  )
   const reserveRobot = useMutation(api.matchScouting.reserveRobot)
   const releaseReservation = useMutation(api.matchScouting.releaseReservation)
   const submitReport = useMutation(api.matchScouting.submitReport)
@@ -170,6 +175,18 @@ export function MatchScoutingRoute() {
     } finally {
       setIsMutating(false)
     }
+  }
+
+  if (viewer === undefined || (viewer.isAuthenticated && data === undefined)) {
+    return <MatchShell title="Match scouting" loading />
+  }
+
+  if (!viewer.isAuthenticated) {
+    return (
+      <section className="mx-auto w-full max-w-md">
+        <AuthForm />
+      </section>
+    )
   }
 
   if (data === undefined) {

@@ -15,7 +15,10 @@ type PickListId = Id<"pickLists">
 
 export function PickListsRoute() {
   const viewer = useQuery(api.events.viewer)
-  const landing = useQuery(api.pickLists.landing)
+  const landing = useQuery(
+    api.pickLists.landing,
+    viewer?.isAuthenticated ? {} : "skip",
+  )
   const createPersonal = useMutation(api.pickLists.createPersonal)
   const ensurePrimary = useMutation(api.pickLists.ensurePrimary)
   const importConsensus = useMutation(api.pickLists.importConsensusToPrimary)
@@ -103,7 +106,7 @@ export function PickListsRoute() {
     }
   }
 
-  if (viewer === undefined || landing === undefined) {
+  if (viewer === undefined || (viewer.isAuthenticated && landing === undefined)) {
     return (
       <section className="flex min-h-[50vh] w-full items-center justify-center">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -121,6 +124,14 @@ export function PickListsRoute() {
             Sign in to view and organize event pick lists.
           </p>
         </div>
+      </section>
+    )
+  }
+
+  if (landing === undefined) {
+    return (
+      <section className="flex min-h-[50vh] w-full items-center justify-center">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
       </section>
     )
   }
