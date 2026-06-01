@@ -19,17 +19,12 @@ export function EventSetupRoute() {
   const { isAuthenticated, isLoading } = useConvexAuth()
   const viewer = useQuery(api.events.viewer)
   const activeEvent = useQuery(api.events.active)
-  const settingsStatus = useQuery(
-    api.settings.adminStatus,
-    viewer?.isAdmin ? {} : "skip",
-  )
   const importEvent = useAction(api.tba.importEvent)
   const [isImporting, setIsImporting] = useState(false)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    const apiKey = String(formData.get("apiKey") ?? "").trim()
     const eventKey = String(formData.get("eventKey") ?? "").trim().toLowerCase()
 
     if (!eventKey) {
@@ -39,9 +34,7 @@ export function EventSetupRoute() {
 
     setIsImporting(true)
     try {
-      const result = await importEvent(
-        apiKey ? { eventKey, apiKey } : { eventKey },
-      )
+      const result = await importEvent({ eventKey })
       toast.success(
         `Imported ${result.teamCount} teams and ${result.matchCount} qualification matches`,
       )
@@ -115,21 +108,6 @@ export function EventSetupRoute() {
               <h2 className="font-semibold">Import from TBA</h2>
             </div>
             <div className="mt-4 space-y-1.5">
-              <Label htmlFor="tba-api-key">TBA API key</Label>
-              <Input
-                id="tba-api-key"
-                name="apiKey"
-                type="password"
-                placeholder={
-                  settingsStatus?.hasTbaApiKey
-                    ? "Stored key exists"
-                    : "Paste TBA API key"
-                }
-                autoComplete="off"
-                disabled={isImporting}
-              />
-            </div>
-            <div className="mt-4 space-y-1.5">
               <Label htmlFor="event-key">Event key</Label>
               <Input
                 id="event-key"
@@ -163,10 +141,10 @@ function importErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : String(error)
 
   if (message.includes("TBA_API_KEY")) {
-    return "Enter a TBA API key, then try the import again."
+    return "TBA_API_KEY is missing in Convex environment variables."
   }
   if (message.includes("TBA API key was rejected")) {
-    return "The TBA API key was rejected. Paste a valid TBA API key and try again."
+    return "The TBA API key configured in Convex was rejected."
   }
   if (message.includes("TBA could not find that event key")) {
     return "TBA could not find that event key."

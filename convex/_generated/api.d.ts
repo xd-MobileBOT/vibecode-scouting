@@ -18,7 +18,6 @@ import type * as http from "../http.js";
 import type * as matchScouting from "../matchScouting.js";
 import type * as pickLists from "../pickLists.js";
 import type * as pitScouting from "../pitScouting.js";
-import type * as settings from "../settings.js";
 import type * as tba from "../tba.js";
 import type * as teams from "../teams.js";
 import type * as validators from "../validators.js";
@@ -40,7 +39,6 @@ declare const fullApi: ApiFromModules<{
   matchScouting: typeof matchScouting;
   pickLists: typeof pickLists;
   pitScouting: typeof pitScouting;
-  settings: typeof settings;
   tba: typeof tba;
   teams: typeof teams;
   validators: typeof validators;

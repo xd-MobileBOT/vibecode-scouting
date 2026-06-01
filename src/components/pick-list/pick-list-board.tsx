@@ -1,9 +1,10 @@
 import {
-  closestCorners,
   DndContext,
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  pointerWithin,
+  rectIntersection,
   TouchSensor,
   useDroppable,
   useSensor,
@@ -81,7 +82,7 @@ export function PickListBoard({
     }),
   )
 
-  const columns = useMemo(
+  const sourceColumns = useMemo(
     () =>
       optimisticPickListId === pickListId && optimisticColumns
         ? optimisticColumns
@@ -93,14 +94,14 @@ export function PickListBoard({
     () =>
       pickTiers.map((tier) => {
         return (
-          columns.find((column) => column.tier === tier.value) ?? {
+          sourceColumns.find((column) => column.tier === tier.value) ?? {
             tier: tier.value,
             label: tier.label,
             items: [],
           }
         )
       }),
-    [columns],
+    [sourceColumns],
   )
 
   if (!list || !pickListId) {
@@ -142,7 +143,7 @@ export function PickListBoard({
   const isPrimary = list.type === "primary"
   const canEdit = list.type === "personal" || (isPrimary && isAdmin)
 
-  function findItem(teamId: string, sourceColumns = columns) {
+  function findItem(teamId: string, sourceColumns = orderedColumns) {
     for (const column of sourceColumns) {
       const item = column.items.find((candidate) => candidate.teamId === teamId)
       if (item) {
@@ -152,7 +153,7 @@ export function PickListBoard({
     return null
   }
 
-  function findColumn(tier: PickTier, sourceColumns = columns) {
+  function findColumn(tier: PickTier, sourceColumns = orderedColumns) {
     return sourceColumns.find((column) => column.tier === tier)
   }
 
@@ -239,7 +240,7 @@ export function PickListBoard({
       return
     }
 
-    const nextColumns = columns.map((column) => {
+    const nextColumns = orderedColumns.map((column) => {
       if (sourceTier === targetTier && column.tier === sourceTier) {
         return {
           ...column,
@@ -363,7 +364,12 @@ export function PickListBoard({
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={(args) => {
+          const pointerIntersections = pointerWithin(args)
+          return pointerIntersections.length > 0
+            ? pointerIntersections
+            : rectIntersection(args)
+        }}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveItem(null)}

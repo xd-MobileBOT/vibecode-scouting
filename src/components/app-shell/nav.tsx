@@ -1,6 +1,14 @@
 import { useAuthActions, useConvexAuth } from "@convex-dev/auth/react"
 import { Link, useLocation } from "react-router"
-import { LogOutIcon, SettingsIcon, TrophyIcon, UsersIcon } from "lucide-react"
+import {
+  ClipboardCheckIcon,
+  ClipboardListIcon,
+  LogOutIcon,
+  Rows3Icon,
+  SettingsIcon,
+  TrophyIcon,
+  UsersIcon,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { ThemeModeMenu } from "@/components/theme-mode-menu"
@@ -18,6 +26,9 @@ type AppShellNavProps = {
 const primaryLinks = [
   { to: "/", label: "Dashboard", icon: TrophyIcon },
   { to: "/teams", label: "Teams", icon: UsersIcon },
+  { to: "/pit-scouting", label: "Pit", icon: ClipboardCheckIcon },
+  { to: "/match-scouting", label: "Match", icon: ClipboardListIcon },
+  { to: "/pick-lists", label: "Picks", icon: Rows3Icon },
 ]
 
 export function AppShellNav({ viewer }: AppShellNavProps) {

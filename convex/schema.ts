@@ -13,12 +13,6 @@ const scoreCounts = v.object({
 
 export default defineSchema({
   ...authTables,
-  appSettings: defineTable({
-    key: v.string(),
-    value: v.string(),
-    updatedByUserId: v.id("users"),
-    updatedAt: v.number(),
-  }).index("by_key", ["key"]),
   events: defineTable({
     eventKey: v.string(),
     name: v.union(v.string(), v.null()),
