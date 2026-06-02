@@ -2,6 +2,7 @@ import { ConvexAuthProvider } from "@convex-dev/auth/react"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { RouterProvider } from "react-router"
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -23,5 +24,6 @@ createRoot(document.getElementById("root")!).render(
         </TooltipProvider>
       </ThemeProvider>
     </ConvexAuthProvider>
+    <SpeedInsights />
   </StrictMode>
 )
