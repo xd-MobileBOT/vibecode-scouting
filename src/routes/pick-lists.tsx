@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react"
-import { ClipboardList, Loader2, ShieldCheck } from "lucide-react"
+import { ClipboardList, Loader2, ShieldCheck, Trash2 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
@@ -20,12 +20,14 @@ export function PickListsRoute() {
     viewer?.isAuthenticated ? {} : "skip",
   )
   const createPersonal = useMutation(api.pickLists.createPersonal)
+  const deletePersonal = useMutation(api.pickLists.deletePersonal)
   const ensurePrimary = useMutation(api.pickLists.ensurePrimary)
   const importConsensus = useMutation(api.pickLists.importConsensusToPrimary)
 
   const [selectedListId, setSelectedListId] = useState<PickListId | null>(null)
   const [newListName, setNewListName] = useState("")
   const [isCreating, setIsCreating] = useState(false)
+  const [deletingListId, setDeletingListId] = useState<PickListId | null>(null)
   const [isEnsuringPrimary, setIsEnsuringPrimary] = useState(false)
   const [isImportingConsensus, setIsImportingConsensus] = useState(false)
 
@@ -71,6 +73,26 @@ export function PickListsRoute() {
       toast.error(error instanceof Error ? error.message : "Could not create list")
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  async function handleDeletePersonal(listId: PickListId, listName: string) {
+    const confirmed = window.confirm(`Delete "${listName}"? This cannot be undone.`)
+    if (!confirmed) {
+      return
+    }
+
+    setDeletingListId(listId)
+    try {
+      await deletePersonal({ pickListId: listId })
+      if (selectedListId === listId) {
+        setSelectedListId(null)
+      }
+      toast.success("Personal pick list deleted")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not delete list")
+    } finally {
+      setDeletingListId(null)
     }
   }
 
@@ -199,20 +221,42 @@ export function PickListsRoute() {
                 </p>
               ) : (
                 selectableLists.map((list) => (
-                  <button
+                  <div
                     key={list._id}
-                    className="flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+                    className="group flex w-full items-center gap-1 rounded-md transition-colors hover:bg-muted data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
                     data-selected={list._id === effectiveSelectedListId}
-                    type="button"
-                    onClick={() => setSelectedListId(list._id)}
                   >
-                    <span className="min-w-0 truncate font-medium">
-                      {list.name}
-                    </span>
-                    <span className="shrink-0 text-xs opacity-75">
-                      {list.displayType}
-                    </span>
-                  </button>
+                    <button
+                      className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                      type="button"
+                      onClick={() => setSelectedListId(list._id)}
+                    >
+                      <span className="min-w-0 truncate font-medium">
+                        {list.name}
+                      </span>
+                      <span className="shrink-0 text-xs opacity-75">
+                        {list.displayType}
+                      </span>
+                    </button>
+                    {list.type === "personal" ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="mr-1 size-7 shrink-0 opacity-70 hover:opacity-100 data-[selected=true]:text-primary-foreground"
+                        disabled={deletingListId === list._id}
+                        title={`Delete ${list.name}`}
+                        onClick={() => handleDeletePersonal(list._id, list.name)}
+                      >
+                        {deletingListId === list._id ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <Trash2 />
+                        )}
+                        <span className="sr-only">Delete {list.name}</span>
+                      </Button>
+                    ) : null}
+                  </div>
                 ))
               )}
             </div>

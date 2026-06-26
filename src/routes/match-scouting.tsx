@@ -233,7 +233,15 @@ export function MatchScoutingRoute() {
           }}
         >
           <SelectTrigger id="match-select" className="h-11 w-full">
-            <SelectValue placeholder="Choose a match" />
+            <SelectValue placeholder="Choose a match">
+              {selectedMatch
+                ? `Match ${selectedMatch.matchNumber}${
+                    selectedMatch.scheduledTime
+                      ? ` - ${formatMatchTime(selectedMatch.scheduledTime)}`
+                      : ""
+                  }`
+                : undefined}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {matches.map((match) => (

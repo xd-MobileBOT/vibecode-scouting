@@ -69,7 +69,7 @@ export function isAdminEmail(email: string) {
     .filter(Boolean)
 
   if (admins.length === 0) {
-    return true
+    return false
   }
 
   return admins.includes(email.toLowerCase())

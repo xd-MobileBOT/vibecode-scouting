@@ -133,6 +133,30 @@ export const createPersonal = mutation({
   },
 })
 
+export const deletePersonal = mutation({
+  args: { pickListId: v.id("pickLists") },
+  handler: async (ctx, args) => {
+    const user = await requireUser(ctx)
+    const list = await ctx.db.get(args.pickListId)
+    if (!list) {
+      return null
+    }
+    if (list.type !== "personal" || list.ownerUserId !== user.userId) {
+      throw new Error("You can only delete your own personal pick lists.")
+    }
+
+    const items = await ctx.db
+      .query("pickListItems")
+      .withIndex("by_pickListId", (q) => q.eq("pickListId", list._id))
+      .collect()
+    for (const item of items) {
+      await ctx.db.delete(item._id)
+    }
+    await ctx.db.delete(list._id)
+    return list._id
+  },
+})
+
 export const ensurePrimary = mutation({
   args: {},
   handler: async (ctx) => {

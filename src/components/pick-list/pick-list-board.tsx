@@ -374,7 +374,7 @@ export function PickListBoard({
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveItem(null)}
       >
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-[repeat(5,minmax(14rem,1fr))] 2xl:grid-cols-[repeat(5,minmax(16rem,1fr))]">
           {orderedColumns.map((column) => (
             <PickListColumn key={column.tier} column={column} canEdit={canEdit} />
           ))}
@@ -405,7 +405,7 @@ function PickListColumn({
     <section
       ref={setNodeRef}
       className={cn(
-        "flex min-h-[18rem] flex-col rounded-lg border bg-card text-card-foreground shadow-sm",
+        "flex min-h-[18rem] min-w-0 flex-col rounded-lg border bg-card text-card-foreground shadow-sm",
         isOver && "ring-3 ring-ring/40",
       )}
     >
@@ -420,7 +420,7 @@ function PickListColumn({
         items={column.items.map((item) => item.teamId)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="grid flex-1 auto-rows-max gap-2 p-2">
+        <div className="grid min-w-0 flex-1 auto-rows-max gap-2 p-2">
           {column.items.length === 0 ? (
             <div className="flex min-h-24 items-center justify-center rounded-lg border border-dashed px-3 text-center text-sm text-muted-foreground">
               Drop teams here

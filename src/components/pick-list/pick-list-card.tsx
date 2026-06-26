@@ -40,13 +40,13 @@ export function PickListCard({ item, isOverlay = false }: PickListCardProps) {
     <article
       ref={setNodeRef}
       className={cn(
-        "rounded-lg border bg-background p-3 shadow-sm transition-shadow",
+        "min-w-0 overflow-hidden rounded-lg border bg-background p-3 shadow-sm transition-shadow",
         isDragging && "opacity-40",
         isOverlay && "shadow-lg",
       )}
       style={style}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex min-w-0 items-start gap-2">
         <button
           className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
           type="button"
@@ -58,7 +58,7 @@ export function PickListCard({ item, isOverlay = false }: PickListCardProps) {
         </button>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-start justify-between gap-2">
             <div className="min-w-0">
               <h3 className="truncate text-base font-semibold leading-6">
                 {item.teamNumber}
@@ -69,7 +69,7 @@ export function PickListCard({ item, isOverlay = false }: PickListCardProps) {
             </div>
             <span
               className={cn(
-                "rounded-md px-1.5 py-0.5 text-[0.7rem] font-medium",
+                "shrink-0 rounded-md px-1.5 py-0.5 text-[0.7rem] font-medium",
                 item.pitScouted
                   ? "bg-primary/10 text-primary"
                   : "bg-muted text-muted-foreground",
@@ -79,11 +79,11 @@ export function PickListCard({ item, isOverlay = false }: PickListCardProps) {
             </span>
           </div>
 
-          <dl className="mt-3 grid grid-cols-2 gap-2">
+          <dl className="mt-3 grid min-w-0 grid-cols-2 gap-2">
             {metrics.map((metric) => (
               <div
                 key={metric.key}
-                className="rounded-md border bg-muted/30 px-2 py-1.5"
+                className="min-w-0 rounded-md border bg-muted/30 px-2 py-1.5"
               >
                 <dt className="truncate text-[0.7rem] text-muted-foreground">
                   {metric.label}
@@ -95,8 +95,8 @@ export function PickListCard({ item, isOverlay = false }: PickListCardProps) {
             ))}
           </dl>
 
-          <div className="mt-2 flex items-center justify-between rounded-md bg-muted/40 px-2 py-1.5 text-xs">
-            <span className="text-muted-foreground">Climb score</span>
+          <div className="mt-2 flex min-w-0 items-center justify-between gap-2 rounded-md bg-muted/40 px-2 py-1.5 text-xs">
+            <span className="min-w-0 truncate text-muted-foreground">Climb score</span>
             <span className="font-semibold">{item.averages.climbScore}</span>
           </div>
         </div>

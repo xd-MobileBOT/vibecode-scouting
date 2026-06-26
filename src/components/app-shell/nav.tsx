@@ -52,8 +52,8 @@ export function AppShellNav({ viewer }: AppShellNavProps) {
           to="/"
           className="flex min-w-0 items-center gap-2 rounded-md text-sm font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-            FRC
+          <span className="grid size-9 shrink-0 place-items-center rounded-md border-2 border-[#f3c13a] bg-[#8a1538] text-[0.72rem] font-black leading-none text-[#f3c13a] shadow-sm">
+            LC
           </span>
           <span className="hidden sm:inline">Scouting</span>
         </Link>
